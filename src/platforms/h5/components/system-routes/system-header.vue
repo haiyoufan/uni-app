@@ -31,6 +31,11 @@ export default {
       default: false
     }
   },
+  created () {
+    if (__PLATFORM__ === 'h5') {
+      document.title = this.$slots.default[0].text
+    }
+  },
   methods: {
     _back () {
       this.$emit('back')
@@ -43,9 +48,6 @@ export default {
 </script>
 
 <style>
-div {
-  box-sizing: border-box;
-}
 
 .system-header {
   position: relative;
@@ -57,6 +59,11 @@ div {
   text-align: center;
   line-height: 44px;
   font-size: 16px;
+  box-sizing: border-box;
+}
+
+.system-header * {
+  box-sizing: border-box;
 }
 
 .header-text {

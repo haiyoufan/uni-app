@@ -41,7 +41,7 @@ export default {
       return this.originalWidth && this.originalHeight ? this.originalWidth / this.originalHeight : 0
     },
     realImagePath () {
-      return this.$getRealPath(this.src)
+      return this.src && this.$getRealPath(this.src)
     },
     modeStyle () {
       let size = 'auto'
@@ -123,12 +123,17 @@ export default {
     _fixSize () {
       const elWidth = this._getWidth()
       if (elWidth) {
-        this.$el.style.height = elWidth / this.ratio + 'px'
+        let height = elWidth / this.ratio
+        // fix: 解决 Chrome 浏览器上某些情况下导致 1px 缝隙的问题
+        if (typeof navigator && navigator.vendor === 'Google Inc.' && height > 10) {
+          height = Math.round(height / 2) * 2
+        }
+        this.$el.style.height = height + 'px'
         this.sizeFixed = true
       }
     },
     _loadImage () {
-      this.$refs.content.style.backgroundImage = `url(${this.realImagePath})`
+      this.$refs.content.style.backgroundImage = this.src ? `url(${this.realImagePath})` : 'none'
 
       const _self = this
       const img = new Image()

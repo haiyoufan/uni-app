@@ -1,12 +1,8 @@
 import VueRouter from 'vue-router'
 
 import {
-  isFn
-} from 'uni-shared'
-
-import {
   isPage
-} from 'uni-helpers'
+} from 'uni-helpers/index'
 
 import {
   createAppMixin
@@ -15,6 +11,14 @@ import {
 import {
   createPageMixin
 } from './page'
+
+import {
+  lifecycleMixin
+} from './lifecycle'
+
+import {
+  getTabBarScrollPosition
+} from './app/router-guard'
 
 function getMinId (routes) {
   let minId = 0
@@ -52,6 +56,8 @@ export default {
   install (Vue, {
     routes
   } = {}) {
+    lifecycleMixin(Vue)
+
     const minId = getMinId(routes)
     const router = new VueRouter({
       id: minId,
@@ -62,6 +68,17 @@ export default {
         if (savedPosition) {
           return savedPosition
         } else {
+          if (
+            to &&
+                        from &&
+                        to.meta.isTabBar &&
+                        from.meta.isTabBar
+          ) { // tabbar 跳 tabbar
+            const position = getTabBarScrollPosition(to.params.__id__)
+            if (position) {
+              return position
+            }
+          }
           return {
             x: 0,
             y: 0
@@ -86,6 +103,11 @@ export default {
     if (__PLATFORM__ === 'h5') {
       if (entryRoute.meta && entryRoute.meta.name) {
         document.body.className = 'uni-body ' + entryRoute.meta.name
+        if (entryRoute.meta.isNVue) {
+          const nvueDirKey = 'nvue-dir-' + __uniConfig.nvue['flex-direction']
+          document.body.setAttribute('nvue', '')
+          document.body.setAttribute(nvueDirKey, '')
+        }
       }
     }
 
@@ -101,23 +123,27 @@ export default {
           const appMixin = createAppMixin(routes, entryRoute)
           // mixin app hooks
           Object.keys(appMixin).forEach(hook => {
-            options[hook] = options[hook] ? [].concat(appMixin[hook], options[hook]) : [appMixin[hook]]
+            options[hook] = options[hook] ? [].concat(appMixin[hook], options[hook]) : [
+              appMixin[hook]
+            ]
           })
 
           // router
           options.router = router
 
           // onError
-          if (!isFn(options.onError)) {
-            options.onError = function (err) {
+          if (!Array.isArray(options.onError) || options.onError.length === 0) {
+            options.onError = [function (err) {
               console.error(err)
-            }
+            }]
           }
         } else if (isPage(this)) {
           const pageMixin = createPageMixin()
           // mixin page hooks
           Object.keys(pageMixin).forEach(hook => {
-            options[hook] = options[hook] ? [].concat(pageMixin[hook], options[hook]) : [pageMixin[hook]]
+            options[hook] = options[hook] ? [].concat(pageMixin[hook], options[hook]) : [
+              pageMixin[hook]
+            ]
           })
         } else {
           if (this.$parent && this.$parent.__page__) {
@@ -132,6 +158,14 @@ export default {
         return this.__page__
       }
     })
+
+    Vue.prototype.createSelectorQuery = function createSelectorQuery () {
+      return uni.createSelectorQuery().in(this)
+    }
+
+    Vue.prototype.createIntersectionObserver = function createIntersectionObserver (args) {
+      return uni.createIntersectionObserver(this, args)
+    }
 
     Vue.use(VueRouter)
   }

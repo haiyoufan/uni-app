@@ -4,7 +4,7 @@ import {
 
 import {
   normalizeDataset
-} from 'uni-helpers'
+} from 'uni-helpers/index'
 
 import {
   wrapperMPEvent
@@ -62,7 +62,7 @@ export function processEvent (name, $event = {}, detail = {}, target = {}, curre
     } = getWindowOffset()
 
     detail = {
-      x: $event.x - top,
+      x: $event.x,
       y: $event.y - top
     }
     $event.touches = $event.changedTouches = [{
@@ -82,8 +82,9 @@ export function processEvent (name, $event = {}, detail = {}, target = {}, curre
     detail: detail,
     target: processTarget(target, detail),
     currentTarget: processTarget(currentTarget),
-    touches: processTouches($event.touches),
-    changedTouches: processTouches($event.changedTouches),
+    // 只处理系统事件
+    touches: ($event instanceof Event || $event instanceof CustomEvent) ? processTouches($event.touches) : $event.touches,
+    changedTouches: ($event instanceof Event || $event instanceof CustomEvent) ? processTouches($event.changedTouches) : $event.changedTouches,
     preventDefault () { },
     stopPropagation () { }
   })
@@ -124,14 +125,15 @@ function touchstart (evt) {
   startPageY = pageY
 
   longPressTimer = setTimeout(function () {
-    evt.target.dispatchEvent(new TouchEvent('longpress', {
+    let customEvent = new CustomEvent('longpress', {
       bubbles: true,
       cancelable: true,
       target: evt.target,
-      currentTarget: evt.currentTarget,
-      touches: evt.touches,
-      changedTouches: evt.changedTouches
-    }))
+      currentTarget: evt.currentTarget
+    })
+    customEvent.touches = evt.touches
+    customEvent.changedTouches = evt.changedTouches
+    evt.target.dispatchEvent(customEvent)
   }, LONGPRESS_TIMEOUT)
 }
 

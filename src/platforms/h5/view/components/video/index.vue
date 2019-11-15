@@ -23,6 +23,7 @@
     :x5-video-player-type="x5VideoPlayerType"
     :x5-video-player-fullscreen="x5VideoPlayerFullscren"
     :x5-video-orientation="x5VideoOrientation"
+    :x5-playsinline="x5Playsinline"
     v-on="$listeners"
   >
     <div
@@ -45,6 +46,7 @@
         :x5-video-player-type="x5VideoPlayerType"
         :x5-video-player-fullscreen="x5VideoPlayerFullscren"
         :x5-video-orientation="x5VideoOrientation"
+        :x5-playsinline="x5Playsinline"
         class="uni-video-video"
         webkit-playsinline
         playsinline
@@ -275,6 +277,10 @@ export default {
       default: false
     },
     x5VideoOrientation: {
+      type: [Boolean, String],
+      default: false
+    },
+    x5Playsinline: {
       type: [Boolean, String],
       default: false
     }
@@ -899,6 +905,8 @@ uni-video[hidden] {
   align-items: center;
   padding: 0 10px;
   z-index: 0;
+  /* 解决全屏后被 video 遮挡的问题 */
+  transform: translate3d(0, 0, 0);
 }
 
 .uni-video-bar.uni-video-bar-full {
